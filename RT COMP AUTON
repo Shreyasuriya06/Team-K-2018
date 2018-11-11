@@ -1,0 +1,147 @@
+#include "robot-config.h"
+#include "math.h"
+
+//This auton is for the red alliance top square. The robot will go forward to hit the bottom flag and reverse and turn to get on the platform.
+
+
+vex::competition    Competition;
+
+
+
+void pre_auton( void ) {
+  // All activities that occur before the competition starts
+  // Example: clearing encoders, setting servo positions, ...
+  
+}
+
+
+double mathfunction (double targetdistance)
+{
+    double wheeldiameter=5.0;
+    double wheelcircumference =wheeldiameter*M_PI;
+    double motorrotations= targetdistance/ wheelcircumference;
+    return motorrotations;
+}
+
+
+void reverse ( double targetdistance, double speed)
+{  
+    double reversedistance= mathfunction(targetdistance);
+    Brain.Screen.printAt( 10, 50, "reverse motor rotation %d", reversedistance);
+    RightMotor.startRotateFor(reversedistance,rotationUnits::rev,speed,velocityUnits::pct);
+    LeftMotor.startRotateTo(reversedistance,rotationUnits::rev,speed,velocityUnits::pct);
+    while (RightMotor.isSpinning()||LeftMotor.isSpinning())
+    {}   
+        
+}
+
+void forward ( double targetdistance,double speed)
+{  
+    double forwarddistance= mathfunction(targetdistance);
+    Brain.Screen.printAt( 10, 50, "forward motor rotation %d", forwarddistance);
+    RightMotor.startRotateFor(forwarddistance,rotationUnits::rev,speed,velocityUnits::pct);
+    LeftMotor.startRotateTo(forwarddistance,rotationUnits::rev,speed,velocityUnits::pct);
+    while (RightMotor.isSpinning()||LeftMotor.isSpinning())
+    {}
+        
+        
+}
+void gyroleftturn()
+{
+     while (Gyro.isCalibrating())
+    {
+        task::sleep(100);
+    }
+    
+    vex::task::sleep(1000);
+    
+    //While loop to do the spin
+    while (Gyro.value(rotationUnits::deg)<=90.0)
+    {
+    Brain.Screen.printAt( 10, 50, "Gyro %f", Gyro.value( rotationUnits::deg ) );
+    LeftMotor.spin( directionType::fwd, 50, velocityUnits::pct );  
+    RightMotor.spin( directionType::rev, 50, velocityUnits::pct );  
+       this_thread::sleep_for(10);
+    }
+    
+    //Stop motors after reached degree turn
+    LeftMotor.stop();
+    RightMotor.stop();
+    
+}
+
+void gyrorightturn ()
+    {
+    while (Gyro.isCalibrating())
+    {
+        task::sleep(100);
+    }
+    
+    vex::task::sleep(1000);
+
+    
+    //While loop to do the spin
+    while (Gyro.value(rotationUnits::deg)>= -90.0)
+    {
+    Brain.Screen.printAt( 10, 50, "Gyro %f", Gyro.value( rotationUnits::deg ) );
+    LeftMotor.spin( directionType::fwd, 50, velocityUnits::pct );  
+    RightMotor.spin( directionType::rev, 50, velocityUnits::pct );  
+       this_thread::sleep_for(10);
+    }
+    
+    //Stop motors after reached degree turn
+    LeftMotor.stop();
+    RightMotor.stop();
+    
+    }
+void autonomous( void )
+{
+    forward(46.0,75.0); //Robot will travel 46 inches forward to hit low flag.
+    reverse(-74.0,75.0); //Robot will reverse back into center position relative to platform.
+    gyrorightturn(); //Robot turns 90 degrees right to face platform.
+    forward(46.0,75.0); //Robot travels forward 46 inches to climb onto the alliance platform.
+    while (1)
+    {
+    vex::task::sleep(100);
+    }
+       
+
+
+}
+
+
+
+void usercontrol( void ) {
+  // User control code here, inside the loop
+  while (1){
+    // This is the main execution loop for the user control program.
+    // Each time through the loop your program should update motor + servo 
+    // values based on feedback from the joysticks.
+
+    // ........................................................................
+    // Insert user code here. This is where you use the joystick values to 
+    // update your motors, etc.
+    // ........................................................................
+ 
+    vex::task::sleep(20); //Sleep the task for a short amount of time to prevent wasted resources. 
+  }
+}
+
+//
+// Main will set up the competition functions and callbacks.
+//
+int main() {
+    
+    //Run the pre-autonomous function. 
+    pre_auton();
+    
+    //Set up callbacks for autonomous and driver control periods.
+    Competition.autonomous( autonomous );
+    Competition.drivercontrol( usercontrol );
+
+    //Prevent main from exiting with an infinite loop.                        
+    while(1) {
+      vex::task::sleep(100);//Sleep the task for a short amount of time to prevent wasted resources.
+    }    
+       
+}
